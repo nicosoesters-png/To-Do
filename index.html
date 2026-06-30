@@ -311,8 +311,41 @@
     padding: 14px 16px;
     box-shadow: 0 12px 30px rgba(0,0,0,0.4);
     border-left: 3px solid var(--gold);
+    z-index: 40;
+    transition: opacity 0.2s ease, transform 0.2s ease;
   }
-  .verse-widget .verse-label { font-size: 0.62rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--gold); margin-bottom: 6px; }
+  .verse-widget.hidden { display: none; }
+  .verse-widget .verse-close {
+    position: absolute;
+    top: 6px;
+    right: 8px;
+    background: none;
+    border: none;
+    color: var(--muted);
+    cursor: pointer;
+    font-size: 0.75rem;
+    line-height: 1;
+    padding: 4px;
+  }
+  .verse-widget .verse-close:hover { color: var(--ink); }
+  .verse-reopen {
+    position: fixed;
+    bottom: 22px;
+    right: 22px;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: rgba(241, 230, 204, 0.9);
+    color: var(--ink);
+    border: 1px solid rgba(184,134,63,0.4);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.35);
+    cursor: pointer;
+    font-size: 1.1rem;
+    z-index: 40;
+    display: none;
+  }
+  .verse-reopen.show { display: block; }
+  .verse-widget .verse-label { font-size: 0.62rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--gold); margin-bottom: 6px; padding-right: 14px; }
   .verse-widget .verse-text { font-family: "Cormorant Garamond", serif; font-style: italic; font-size: 0.92rem; line-height: 1.35; margin-bottom: 6px; }
   .verse-widget .verse-ref { font-size: 0.7rem; color: var(--muted); text-align: right; }
   @media (max-width: 600px) {
@@ -672,11 +705,13 @@
     </div>
   </section>
 
-  <div class="verse-widget">
+  <div class="verse-widget" id="verse-widget">
+    <button class="verse-close" id="verse-close" title="Schließen">✕</button>
     <div class="verse-label">Verse of the Day</div>
     <div class="verse-text" id="verse-text"></div>
     <div class="verse-ref" id="verse-ref"></div>
   </div>
+  <button class="verse-reopen" id="verse-reopen" title="Tagesvers anzeigen">✝</button>
 
 <script>
 /* ============================================================
@@ -1380,6 +1415,31 @@ function renderVerse() {
 }
 renderVerse();
 setInterval(renderVerse, 60 * 60 * 1000);
+
+const VERSE_DISMISS_KEY = "todo-app-verse-dismissed-date";
+function todayKey() {
+  const d = new Date();
+  return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+}
+function showVerseWidget() {
+  document.getElementById("verse-widget").classList.remove("hidden");
+  document.getElementById("verse-reopen").classList.remove("show");
+}
+function hideVerseWidget() {
+  document.getElementById("verse-widget").classList.add("hidden");
+  document.getElementById("verse-reopen").classList.add("show");
+}
+document.getElementById("verse-close").addEventListener("click", () => {
+  localStorage.setItem(VERSE_DISMISS_KEY, todayKey());
+  hideVerseWidget();
+});
+document.getElementById("verse-reopen").addEventListener("click", () => {
+  localStorage.removeItem(VERSE_DISMISS_KEY);
+  showVerseWidget();
+});
+if (localStorage.getItem(VERSE_DISMISS_KEY) === todayKey()) {
+  hideVerseWidget();
+}
 
 /* ============================================================
    Notifications (today's tasks + deadlines within 3 days)

@@ -3,7 +3,11 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>To-Do List</title>
+<title>Worksheet</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="theme-color" content="#2b1d12">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=Cormorant+Garamond:ital@0;1&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
@@ -516,7 +520,7 @@
 
   <div class="top">
     <div class="eyebrow">Daily Discipline</div>
-    <h1>To Do List</h1>
+    <h1>Worksheet</h1>
     <div class="rule"></div>
   </div>
 
@@ -1313,6 +1317,12 @@ notifyBtn.addEventListener("click", () => {
 });
 
 updateNotifyBtn();
+
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("sw.js").catch(() => {});
+  });
+}
 checkDueTodayAndNotify(false);
 setInterval(() => checkDueTodayAndNotify(false), 30 * 60 * 1000);
 </script>

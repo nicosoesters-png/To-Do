@@ -10,6 +10,7 @@
 <meta name="theme-color" content="#2b1d12">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=Cormorant+Garamond:ital@0;1&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <style>
   :root {
     --navy: #2b1d12;
@@ -144,6 +145,7 @@
   .box-list li { display: flex; align-items: baseline; gap: 10px; padding: 6px 0; border-bottom: 1px solid var(--line); }
   .box-list li:last-child { border-bottom: none; }
   .box-list .chk { width: 13px; height: 13px; border: 1px solid var(--ink); flex: 0 0 13px; margin-top: 2px; }
+  .box-list .overdue-marks { color: #b91c1c; font-size: 0.78rem; font-weight: 700; margin-right: 2px; letter-spacing: -1px; }
   .box-list .label { font-family: "Cormorant Garamond", serif; font-style: italic; font-size: 1.05rem; flex: 1; }
   .box-list .meta { font-size: 0.68rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); white-space: nowrap; }
   .box-list .empty { font-family: "Cormorant Garamond", serif; font-style: italic; color: var(--muted); padding: 6px 0; }
@@ -556,6 +558,25 @@
   .cal-detail li { padding: 6px 0; border-bottom: 1px solid var(--line); font-family: "Cormorant Garamond", serif; font-style: italic; font-size: 1rem; display: flex; justify-content: space-between; }
   .cal-detail .empty { color: var(--muted); font-style: italic; }
 
+  /* ---------- Courses / PDF import ---------- */
+  .courses-wrap { max-width: 760px; margin: 0 auto; }
+  .courses-card { background: linear-gradient(155deg, #f1e6cc 0%, var(--cream) 55%, #e3d4ae 100%); border: 1px solid rgba(184,134,63,0.3); border-radius: 18px; padding: 24px 26px; color: var(--ink); box-shadow: 0 18px 40px rgba(0,0,0,0.35); }
+  .courses-card h2 { font-family: "Playfair Display", serif; font-size: 1.3rem; margin: 0 0 6px; letter-spacing: 0.04em; }
+  .courses-card p.hint { font-size: 0.82rem; color: var(--muted); margin: 0 0 16px; }
+  .courses-upload { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 18px; }
+  .courses-upload input[type="file"] { font-size: 0.82rem; color: var(--ink); }
+  .courses-status { font-size: 0.82rem; color: var(--muted); margin-bottom: 12px; min-height: 1.1em; }
+  .cand-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 10px; }
+  .cand-row { border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; display: flex; flex-direction: column; gap: 6px; background: rgba(255,255,255,0.25); }
+  .cand-row .cand-top { display: flex; align-items: center; gap: 8px; }
+  .cand-row input[type="text"].cand-title { flex: 1; font-family: "Cormorant Garamond", serif; font-size: 1rem; background: transparent; border: none; border-bottom: 1px solid var(--line); color: var(--ink); padding: 2px 0; }
+  .cand-row select, .cand-row input[type="date"] { font-size: 0.8rem; border: 1px solid var(--line); border-radius: 6px; padding: 3px 6px; background: var(--cream); color: var(--ink); }
+  .cand-row .cand-meta { font-size: 0.72rem; color: var(--muted); }
+  .courses-actions { margin-top: 18px; display: flex; gap: 10px; }
+  .courses-actions button { font-family: "Cormorant Garamond", serif; font-size: 0.95rem; letter-spacing: 0.04em; padding: 8px 18px; border-radius: 8px; cursor: pointer; border: 1px solid var(--gold); background: var(--gold); color: #2a2210; }
+  .courses-actions button.secondary { background: none; color: var(--ink); border-color: var(--line); }
+  .courses-actions button:hover { filter: brightness(1.05); }
+
   /* ---------- Search results ---------- */
   .search-results {
     max-width: 700px;
@@ -585,6 +606,7 @@
     <button class="tab active" data-view="todo">To-Do</button>
     <button class="tab" data-view="notes">Notizen</button>
     <button class="tab" data-view="calendar">Kalender</button>
+    <button class="tab" data-view="courses">Kurse</button>
     <input type="text" class="search-input" id="global-search" placeholder="Suchen…" />
     <button class="export-btn" id="export-btn">⬇ Backup</button>
   </nav>
@@ -705,6 +727,26 @@
     </div>
   </section>
 
+  <!-- ===== COURSES VIEW (PDF deadline import) ===== -->
+  <section class="view" id="view-courses">
+    <div class="courses-wrap">
+      <div class="courses-card">
+        <h2>Kurse</h2>
+        <p class="hint">PDF-Kursunterlagen hochladen, Deadlines (Exam, Presentation, Assignment) werden automatisch erkannt. Vor der Übernahme kannst du jeden Eintrag prüfen, bearbeiten oder entfernen.</p>
+        <div class="courses-upload">
+          <input type="file" id="course-pdf-input" accept="application/pdf" />
+          <button class="lock-btn" id="course-scan-btn" type="button">PDF analysieren</button>
+        </div>
+        <div class="courses-status" id="courses-status"></div>
+        <ul class="cand-list" id="cand-list"></ul>
+        <div class="courses-actions" id="courses-actions" style="display:none;">
+          <button id="courses-apply-btn" type="button">Übernehmen</button>
+          <button class="secondary" id="courses-cancel-btn" type="button">Abbrechen</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <div class="verse-widget" id="verse-widget">
     <button class="verse-close" id="verse-close" title="Schließen">✕</button>
     <div class="verse-label">Verse of the Day</div>
@@ -807,6 +849,15 @@ function computeArea(t) {
   return "NextWeek";
 }
 
+function overdueMarks(t) {
+  if (t.done || !t.due) return 0;
+  const today = startOfDay(new Date());
+  const due = startOfDay(new Date(t.due + "T00:00:00"));
+  if (due >= today) return 0;
+  const diffDays = Math.floor((today - due) / 86400000);
+  return Math.max(1, Math.ceil(diffDays / 7));
+}
+
 function fmtDate(due) {
   if (!due) return "";
   const d = new Date(due + "T00:00:00");
@@ -841,6 +892,14 @@ function render() {
     }
     grouped[b].forEach((t) => {
       const li = document.createElement("li");
+      const marks = overdueMarks(t);
+      if (marks > 0) {
+        const exc = document.createElement("span");
+        exc.className = "overdue-marks";
+        exc.textContent = "❗".repeat(marks);
+        exc.title = `${marks} Woche(n) überfällig`;
+        li.appendChild(exc);
+      }
       const chk = document.createElement("span");
       chk.className = "chk";
       const label = document.createElement("span");
@@ -1520,6 +1579,271 @@ if ("serviceWorker" in navigator) {
 }
 checkDueTodayAndNotify(false);
 setInterval(() => checkDueTodayAndNotify(false), 30 * 60 * 1000);
+
+/* ============================================================
+   Courses: PDF deadline extraction (regex/keyword based, no AI)
+   ============================================================ */
+if (window.pdfjsLib) {
+  pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+}
+
+const MONTHS_DE_EN = {
+  jan: 0, january: 0, januar: 0,
+  feb: 1, february: 1, februar: 1,
+  mar: 2, march: 2, märz: 2, maerz: 2,
+  apr: 3, april: 3,
+  may: 4, mai: 4,
+  jun: 5, june: 5, juni: 5,
+  jul: 6, july: 6, juli: 6,
+  aug: 7, august: 7,
+  sep: 8, sept: 8, september: 8,
+  oct: 9, october: 9, okt: 9, oktober: 9,
+  nov: 10, november: 10,
+  dec: 11, december: 11, dez: 11, dezember: 11,
+};
+
+const TUTORIAL_TASK_RE = /\btask\s*\d+(\.\d+)?\b|\btutorial\s*\d+\b|\bquestion\s*\d+(\.\d+)?\b|\bex(ercise)?\.?\s*\d+(\.\d+)?\b/i;
+const TOC_LINE_RE = /\.{4,}|\.\s\.\s\.\s\./;
+
+const DEADLINE_KEYWORDS = [
+  { re: /\bresit\s*exam\b|\bexam(ination)?\b|\bwritten\s*test\b|\bfinal\s*test\b/i, type: "Exam", offsetDays: 10 },
+  { re: /\bpresentation(s)?\b/i, type: "Presentation", offsetDays: 7 },
+  { re: /\bassignment(s)?\b|\bsubmission\b|\bhand\s*in\b|\bdeadline\b|\bdue\s*date\b|\bsubmit\b/i, type: "Assignment", offsetDays: 7 },
+];
+
+function findAcademicYears(text) {
+  // Prefer an explicit "YYYY-YYYY" academic-year pair (most frequent one wins),
+  // since standalone years elsewhere in the doc (citations, references) are noise.
+  const pairCounts = new Map();
+  const re = /\b(20\d{2})\s*[-/]\s*(20\d{2})\b/g;
+  let m;
+  while ((m = re.exec(text))) {
+    const key = m[1] + "-" + m[2];
+    pairCounts.set(key, (pairCounts.get(key) || 0) + 1);
+  }
+  if (pairCounts.size > 0) {
+    let bestKey = null, bestCount = -1;
+    pairCounts.forEach((count, key) => { if (count > bestCount) { bestCount = count; bestKey = key; } });
+    const [a, b] = bestKey.split("-").map((n) => parseInt(n, 10));
+    return [a, b];
+  }
+  const years = new Set();
+  const re2 = /\b(20\d{2})\b/g;
+  while ((m = re2.exec(text))) years.add(parseInt(m[1], 10));
+  return Array.from(years).sort((a, b) => a - b);
+}
+
+function inferYearForMonth(monthIdx, academicYears) {
+  if (academicYears.length === 0) return new Date().getFullYear();
+  const startYear = academicYears[0];
+  // Academic year typically starts around September; months Sep-Dec use start year, Jan-Aug use start year + 1
+  return monthIdx >= 8 ? startYear : (academicYears[1] || startYear + 1);
+}
+
+function extractDateFromLine(line, academicYears) {
+  let m = line.match(/\b(\d{1,2})[.\-/](\d{1,2})[.\-/](20\d{2})\b/);
+  if (m) {
+    const day = parseInt(m[1], 10), month = parseInt(m[2], 10) - 1, year = parseInt(m[3], 10);
+    if (day >= 1 && day <= 31 && month >= 0 && month <= 11) return new Date(year, month, day);
+  }
+  const monthNames = Object.keys(MONTHS_DE_EN).sort((a, b) => b.length - a.length).join("|");
+  const reDM = new RegExp(`\\b(\\d{1,2})[-\\s]?(${monthNames})\\b`, "i");
+  m = line.match(reDM);
+  if (m) {
+    const day = parseInt(m[1], 10);
+    const monthIdx = MONTHS_DE_EN[m[2].toLowerCase()];
+    const year = inferYearForMonth(monthIdx, academicYears);
+    if (day >= 1 && day <= 31) return new Date(year, monthIdx, day);
+  }
+  const reMD = new RegExp(`\\b(${monthNames})\\s+(\\d{1,2})\\b`, "i");
+  m = line.match(reMD);
+  if (m) {
+    const monthIdx = MONTHS_DE_EN[m[1].toLowerCase()];
+    const day = parseInt(m[2], 10);
+    const year = inferYearForMonth(monthIdx, academicYears);
+    if (day >= 1 && day <= 31) return new Date(year, monthIdx, day);
+  }
+  return null;
+}
+
+function extractDeadlineCandidates(fullText) {
+  const academicYears = findAcademicYears(fullText);
+  const lines = fullText.split(/\r?\n/);
+  const candidates = [];
+  lines.forEach((rawLine) => {
+    const line = rawLine.trim();
+    if (!line || TOC_LINE_RE.test(line)) return;
+    if (TUTORIAL_TASK_RE.test(line)) return;
+    for (const kw of DEADLINE_KEYWORDS) {
+      if (kw.re.test(line)) {
+        const date = extractDateFromLine(line, academicYears);
+        if (date) {
+          candidates.push({
+            id: cryptoId(),
+            title: line.length > 90 ? line.slice(0, 90) + "…" : line,
+            type: kw.type,
+            date: date,
+            offsetDays: kw.offsetDays,
+            include: true,
+          });
+        }
+        break;
+      }
+    }
+  });
+  // dedupe by same date+type
+  const seen = new Set();
+  return candidates.filter((c) => {
+    const key = c.type + "|" + c.date.toDateString();
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
+function isoFromDate(d) {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+function addDaysToDate(d, n) {
+  const x = new Date(d);
+  x.setDate(x.getDate() + n);
+  return x;
+}
+
+let courseCandidates = [];
+
+function renderCandidates() {
+  const ul = document.getElementById("cand-list");
+  const actions = document.getElementById("courses-actions");
+  ul.innerHTML = "";
+  if (courseCandidates.length === 0) {
+    actions.style.display = "none";
+    return;
+  }
+  actions.style.display = "flex";
+  courseCandidates.forEach((c) => {
+    const li = document.createElement("li");
+    li.className = "cand-row";
+
+    const top = document.createElement("div");
+    top.className = "cand-top";
+
+    const cb = document.createElement("input");
+    cb.type = "checkbox";
+    cb.checked = c.include;
+    cb.addEventListener("change", () => { c.include = cb.checked; });
+
+    const titleInput = document.createElement("input");
+    titleInput.type = "text";
+    titleInput.className = "cand-title";
+    titleInput.value = c.title;
+    titleInput.addEventListener("input", () => { c.title = titleInput.value; });
+
+    const typeSel = document.createElement("select");
+    ["Exam", "Presentation", "Assignment"].forEach((t) => {
+      const opt = document.createElement("option");
+      opt.value = t; opt.textContent = t;
+      if (t === c.type) opt.selected = true;
+      typeSel.appendChild(opt);
+    });
+    typeSel.addEventListener("change", () => {
+      c.type = typeSel.value;
+      c.offsetDays = c.type === "Exam" ? 10 : 7;
+      renderCandidates();
+    });
+
+    const dateInput = document.createElement("input");
+    dateInput.type = "date";
+    dateInput.value = isoFromDate(c.date);
+    dateInput.addEventListener("change", () => { c.date = new Date(dateInput.value + "T00:00:00"); renderCandidates(); });
+
+    top.appendChild(cb);
+    top.appendChild(titleInput);
+    top.appendChild(typeSel);
+    top.appendChild(dateInput);
+
+    const meta = document.createElement("div");
+    meta.className = "cand-meta";
+    const doDate = addDaysToDate(c.date, -c.offsetDays);
+    meta.textContent = `To-Do ab: ${isoFromDate(doDate)} (Priorität: High) · Deadline im Kalender: ${isoFromDate(c.date)}`;
+
+    li.appendChild(top);
+    li.appendChild(meta);
+    ul.appendChild(li);
+  });
+}
+
+document.getElementById("course-scan-btn").addEventListener("click", async () => {
+  const input = document.getElementById("course-pdf-input");
+  const status = document.getElementById("courses-status");
+  if (!input.files || input.files.length === 0) {
+    status.textContent = "Bitte zuerst eine PDF-Datei auswählen.";
+    return;
+  }
+  if (!window.pdfjsLib) {
+    status.textContent = "PDF-Bibliothek konnte nicht geladen werden (keine Internetverbindung?).";
+    return;
+  }
+  status.textContent = "Analysiere PDF…";
+  courseCandidates = [];
+  renderCandidates();
+  try {
+    const file = input.files[0];
+    const buf = await file.arrayBuffer();
+    const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
+    let fullText = "";
+    for (let p = 1; p <= pdf.numPages; p++) {
+      const page = await pdf.getPage(p);
+      const content = await page.getTextContent();
+      const pageText = content.items.map((it) => it.str).join(" ");
+      fullText += pageText + "\n";
+    }
+    courseCandidates = extractDeadlineCandidates(fullText);
+    if (courseCandidates.length === 0) {
+      status.textContent = "Keine Deadlines erkannt. Du kannst das Dokument prüfen oder Deadlines manuell anlegen.";
+    } else {
+      status.textContent = `${courseCandidates.length} mögliche Deadline(s) gefunden. Bitte prüfen und bearbeiten, dann „Übernehmen“ klicken.`;
+    }
+    renderCandidates();
+  } catch (err) {
+    status.textContent = "Fehler beim Lesen der PDF-Datei.";
+  }
+});
+
+document.getElementById("courses-apply-btn").addEventListener("click", () => {
+  const toApply = courseCandidates.filter((c) => c.include);
+  toApply.forEach((c) => {
+    const deadlineIso = isoFromDate(c.date);
+    const dueIso = isoFromDate(addDaysToDate(c.date, -c.offsetDays));
+    tasks.push({
+      id: cryptoId(),
+      task: c.title,
+      priority: "High",
+      due: dueIso,
+      deadline: deadlineIso,
+      done: false,
+      tags: ["kurs"],
+      noteId: null,
+    });
+  });
+  saveTasks();
+  render();
+  document.getElementById("courses-status").textContent = `${toApply.length} Deadline(s) als Aufgaben übernommen.`;
+  courseCandidates = [];
+  renderCandidates();
+  document.getElementById("course-pdf-input").value = "";
+});
+
+document.getElementById("courses-cancel-btn").addEventListener("click", () => {
+  courseCandidates = [];
+  renderCandidates();
+  document.getElementById("courses-status").textContent = "";
+  document.getElementById("course-pdf-input").value = "";
+});
 </script>
 </body>
 </html>

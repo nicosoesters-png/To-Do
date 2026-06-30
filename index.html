@@ -4,35 +4,63 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>To-Do List</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=Cormorant+Garamond:ital@0;1&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
   :root {
-    --dark-blue: #1f3864;
-    --red: #c00000;
-    --orange: #ed7d31;
-    --yellow: #ffc000;
-    --blue: #2e75b6;
-    --grey: #808080;
-    --border: #dcdfe4;
-    --bg: #f5f6f8;
+    --navy: #0e1a2b;
+    --navy-deep: #0a141f;
+    --cream: #ece8e0;
+    --cream-dim: #e1ddd3;
+    --gold: #b89a5e;
+    --ink: #1c2430;
+    --line: #b9b2a3;
+    --muted: #8a8275;
   }
   * { box-sizing: border-box; }
+  html, body {
+    height: 100%;
+  }
   body {
-    font-family: -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
-    background: var(--bg);
+    font-family: "Jost", sans-serif;
+    background: radial-gradient(circle at 20% 0%, #15233a 0%, var(--navy) 45%, var(--navy-deep) 100%);
     margin: 0;
-    padding: 24px;
-    color: #222;
+    padding: 48px 32px;
+    color: var(--cream);
+    min-height: 100vh;
   }
-  h1 {
-    color: var(--dark-blue);
-    font-size: 2.4rem;
-    margin: 0 0 24px 0;
-    font-weight: 800;
+  .top {
+    text-align: center;
+    margin-bottom: 40px;
   }
+  .top .eyebrow {
+    font-size: 0.72rem;
+    letter-spacing: 0.4em;
+    color: var(--gold);
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+  .top h1 {
+    font-family: "Playfair Display", serif;
+    font-weight: 600;
+    font-size: 2.6rem;
+    margin: 0;
+    letter-spacing: 0.02em;
+    color: #f4f1ea;
+  }
+  .top .rule {
+    width: 70px;
+    height: 1px;
+    background: var(--gold);
+    margin: 16px auto 0;
+  }
+
   .layout {
+    max-width: 1180px;
+    margin: 0 auto;
     display: grid;
-    grid-template-columns: 1fr 560px;
-    gap: 24px;
+    grid-template-columns: 1fr 460px;
+    gap: 28px;
     align-items: start;
   }
   @media (max-width: 980px) {
@@ -41,185 +69,224 @@
   .boxes-top {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 16px;
+    gap: 20px;
   }
   .boxes-stack {
     display: flex;
     flex-direction: column;
-    gap: 16px;
-    margin-top: 16px;
+    gap: 20px;
+    margin-top: 20px;
   }
-  .box {
-    background: #fff;
-    border-radius: 10px;
-    overflow: hidden;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-    border: 1px solid var(--border);
+
+  .card {
+    background: var(--cream);
+    border-radius: 18px;
+    box-shadow: 0 18px 40px rgba(0,0,0,0.35);
+    color: var(--ink);
+    padding: 22px 24px 16px;
   }
-  .box-header {
-    padding: 10px 14px;
-    font-weight: 700;
-    font-size: 1.05rem;
-    color: #fff;
+  .card-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 14px;
   }
-  .box.today .box-header { background: var(--red); }
-  .box.tomorrow .box-header { background: var(--orange); }
-  .box.week .box-header { background: var(--yellow); color: #222; }
-  .box.nextweek .box-header { background: var(--blue); }
-  .box.general .box-header { background: var(--grey); }
+  .card-head h2 {
+    font-family: "Playfair Display", serif;
+    font-weight: 600;
+    font-size: 1.1rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin: 0;
+  }
+  .card-head .dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+  }
+  .box.today .dot { background: #8a2c2c; }
+  .box.tomorrow .dot { background: #b56a2c; }
+  .box.week .dot { background: var(--gold); }
+  .box.nextweek .dot { background: #3a5a78; }
+  .box.general .dot { background: #8a8275; }
+
   .box-list {
     list-style: none;
     margin: 0;
-    padding: 8px 0;
-    min-height: 36px;
+    padding: 0;
+    min-height: 30px;
   }
   .box-list li {
-    padding: 7px 14px;
-    font-size: 0.95rem;
-    border-bottom: 1px solid #f0f0f0;
     display: flex;
-    justify-content: space-between;
-    gap: 8px;
+    align-items: baseline;
+    gap: 10px;
+    padding: 6px 0;
+    border-bottom: 1px solid var(--line);
   }
   .box-list li:last-child { border-bottom: none; }
-  .box-list .empty { color: #aaa; font-style: italic; }
-  .pill {
-    font-size: 0.7rem;
-    padding: 1px 7px;
-    border-radius: 10px;
-    color: #fff;
-    white-space: nowrap;
-    align-self: center;
+  .box-list .chk {
+    width: 13px;
+    height: 13px;
+    border: 1px solid var(--ink);
+    flex: 0 0 13px;
+    margin-top: 2px;
   }
-  .pill.High { background: var(--red); }
-  .pill.Medium { background: var(--orange); }
-  .pill.Low { background: var(--blue); }
+  .box-list .label {
+    font-family: "Cormorant Garamond", serif;
+    font-style: italic;
+    font-size: 1.05rem;
+    flex: 1;
+  }
+  .box-list .meta {
+    font-size: 0.68rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+  .box-list .empty {
+    font-family: "Cormorant Garamond", serif;
+    font-style: italic;
+    color: var(--muted);
+    padding: 6px 0;
+  }
 
   .panel {
-    background: #fff;
-    border-radius: 10px;
-    border: 1px solid var(--border);
-    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-    padding: 18px;
+    background: var(--cream);
+    border-radius: 18px;
+    box-shadow: 0 18px 40px rgba(0,0,0,0.35);
+    padding: 26px 26px 20px;
+    color: var(--ink);
   }
   .panel h2 {
-    margin: 0 0 12px 0;
-    font-size: 1.1rem;
-    color: var(--dark-blue);
+    font-family: "Playfair Display", serif;
+    font-weight: 600;
+    font-size: 1.3rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    text-align: center;
+    margin: 0 0 22px 0;
   }
   form.add-task {
     display: grid;
     grid-template-columns: 2fr 1fr 1fr auto;
     gap: 8px;
-    margin-bottom: 16px;
+    margin-bottom: 22px;
   }
   form.add-task input, form.add-task select {
-    padding: 8px 10px;
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    font-size: 0.9rem;
+    padding: 9px 10px;
+    border: none;
+    border-bottom: 1px solid var(--line);
+    background: transparent;
+    font-family: "Jost", sans-serif;
+    font-size: 0.88rem;
+    color: var(--ink);
+  }
+  form.add-task input:focus, form.add-task select:focus {
+    outline: none;
+    border-bottom-color: var(--gold);
   }
   form.add-task button {
-    background: var(--dark-blue);
-    color: #fff;
+    background: var(--navy);
+    color: var(--cream);
     border: none;
-    border-radius: 6px;
+    border-radius: 4px;
     padding: 8px 16px;
-    font-weight: 600;
+    font-size: 0.78rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
     cursor: pointer;
   }
   form.add-task button:hover { background: #16294a; }
 
-  table.tasks {
-    width: 100%;
-    table-layout: fixed;
-    border-collapse: collapse;
-    font-size: 0.9rem;
+  .task-rows {
+    list-style: none;
+    margin: 0;
+    padding: 0;
   }
-  table.tasks th {
-    text-align: left;
-    border-bottom: 2px solid var(--border);
-    padding: 8px 6px;
-    color: #555;
-    font-size: 0.78rem;
-    text-transform: uppercase;
-    letter-spacing: 0.03em;
+  .task-rows li {
+    display: grid;
+    grid-template-columns: 22px 1fr 95px 120px 24px;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--line);
   }
-  table.tasks td {
-    padding: 7px 6px;
-    border-bottom: 1px solid #f0f0f0;
-    vertical-align: middle;
+  .task-rows li.done {
+    opacity: 0.45;
   }
-  table.tasks tr.done td {
-    color: #aaa;
+  .task-rows li.done .task-input {
     text-decoration: line-through;
-    background: #fafafa;
   }
-  table.tasks input[type="text"], table.tasks input[type="date"], table.tasks select {
-    border: 1px solid transparent;
-    background: transparent;
-    padding: 4px 6px;
-    border-radius: 4px;
-    font-size: 0.88rem;
-    width: 100%;
-  }
-  table.tasks input[type="text"]:hover, table.tasks input[type="date"]:hover, table.tasks select:hover {
-    border-color: var(--border);
-  }
-  table.tasks input[type="checkbox"] {
-    width: 18px;
-    height: 18px;
+  .task-rows input[type="checkbox"] {
+    width: 15px;
+    height: 15px;
+    accent-color: var(--navy);
     cursor: pointer;
   }
-  .area-tag {
-    font-size: 0.7rem;
-    padding: 2px 8px;
-    border-radius: 10px;
-    color: #fff;
-    white-space: nowrap;
+  .task-rows .task-input {
+    font-family: "Cormorant Garamond", serif;
+    font-style: italic;
+    font-size: 1.05rem;
+    border: none;
+    background: transparent;
+    color: var(--ink);
+    width: 100%;
+    padding: 2px 0;
   }
-  .area-tag.Today { background: var(--red); }
-  .area-tag.Tomorrow { background: var(--orange); }
-  .area-tag.ThisWeek { background: var(--yellow); color: #222; }
-  .area-tag.NextWeek { background: var(--blue); }
-  .area-tag.General { background: var(--grey); }
-  .area-tag.Done { background: #bbb; }
+  .task-rows .task-input:focus { outline: none; border-bottom: 1px solid var(--gold); }
+  .task-rows select, .task-rows input[type="date"] {
+    border: none;
+    background: transparent;
+    font-family: "Jost", sans-serif;
+    font-size: 0.78rem;
+    color: var(--muted);
+    padding: 2px 0;
+    width: 100%;
+  }
+  .task-rows select:focus, .task-rows input[type="date"]:focus { outline: none; }
   .del-btn {
     background: none;
     border: none;
-    color: #c00000;
+    color: var(--muted);
     cursor: pointer;
-    font-size: 1.1rem;
+    font-size: 1rem;
     line-height: 1;
+    justify-self: end;
   }
-  .del-btn:hover { color: #800; }
+  .del-btn:hover { color: #8a2c2c; }
 </style>
 </head>
 <body>
-  <h1>To-Do List</h1>
+  <div class="top">
+    <div class="eyebrow">Daily Discipline</div>
+    <h1>To Do List</h1>
+    <div class="rule"></div>
+  </div>
+
   <div class="layout">
     <div>
       <div class="boxes-top">
-        <div class="box today">
-          <div class="box-header">Today</div>
+        <div class="card box today">
+          <div class="card-head"><h2>Today</h2><span class="dot"></span></div>
           <ul class="box-list" id="box-Today"></ul>
         </div>
-        <div class="box tomorrow">
-          <div class="box-header">Tomorrow</div>
+        <div class="card box tomorrow">
+          <div class="card-head"><h2>Tomorrow</h2><span class="dot"></span></div>
           <ul class="box-list" id="box-Tomorrow"></ul>
         </div>
       </div>
       <div class="boxes-stack">
-        <div class="box week">
-          <div class="box-header">This Week</div>
+        <div class="card box week">
+          <div class="card-head"><h2>This Week</h2><span class="dot"></span></div>
           <ul class="box-list" id="box-ThisWeek"></ul>
         </div>
-        <div class="box nextweek">
-          <div class="box-header">Next Week</div>
+        <div class="card box nextweek">
+          <div class="card-head"><h2>Next Week</h2><span class="dot"></span></div>
           <ul class="box-list" id="box-NextWeek"></ul>
         </div>
-        <div class="box general">
-          <div class="box-header">General</div>
+        <div class="card box general">
+          <div class="card-head"><h2>General</h2><span class="dot"></span></div>
           <ul class="box-list" id="box-General"></ul>
         </div>
       </div>
@@ -237,19 +304,7 @@
         <input type="date" id="new-due" />
         <button type="submit">Add</button>
       </form>
-      <table class="tasks">
-        <thead>
-          <tr>
-            <th style="width:34px">Done</th>
-            <th style="width:auto">Task</th>
-            <th style="width:90px">Priority</th>
-            <th style="width:130px">Due</th>
-            <th style="width:85px">Area</th>
-            <th style="width:26px"></th>
-          </tr>
-        </thead>
-        <tbody id="task-rows"></tbody>
-      </table>
+      <ul class="task-rows" id="task-rows"></ul>
     </div>
   </div>
 
@@ -289,9 +344,8 @@ function startOfDay(d) {
 }
 
 function endOfWeek(d) {
-  // week ends Sunday (ISO Mon-Sun)
   const x = startOfDay(d);
-  const day = x.getDay(); // 0=Sun..6=Sat
+  const day = x.getDay();
   const diff = day === 0 ? 0 : 7 - day;
   x.setDate(x.getDate() + diff);
   return x;
@@ -318,19 +372,9 @@ function fmtDate(due) {
   return `${dd}.${mm}.`;
 }
 
-function fmtDateFull(due) {
-  if (!due) return "";
-  const d = new Date(due + "T00:00:00");
-  const dd = String(d.getDate()).padStart(2, "0");
-  const mm = String(d.getMonth() + 1).padStart(2, "0");
-  const yyyy = d.getFullYear();
-  return `${dd}.${mm}.${yyyy}`;
-}
-
 const AREA_LABEL = { Today: "Today", Tomorrow: "Tomorrow", ThisWeek: "This Week", NextWeek: "Next Week", General: "General", Done: "Done" };
 
 function render() {
-  // boxes
   const boxIds = ["Today", "Tomorrow", "ThisWeek", "NextWeek", "General"];
   const grouped = {};
   boxIds.forEach((b) => (grouped[b] = []));
@@ -351,25 +395,27 @@ function render() {
     }
     grouped[b].forEach((t) => {
       const li = document.createElement("li");
+      const chk = document.createElement("span");
+      chk.className = "chk";
       const label = document.createElement("span");
-      label.textContent = t.task + (t.due ? ` (${fmtDate(t.due)})` : "");
-      const pill = document.createElement("span");
-      pill.className = "pill " + t.priority;
-      pill.textContent = t.priority;
+      label.className = "label";
+      label.textContent = t.task;
+      const meta = document.createElement("span");
+      meta.className = "meta";
+      meta.textContent = (t.due ? fmtDate(t.due) + " · " : "") + t.priority;
+      li.appendChild(chk);
       li.appendChild(label);
-      li.appendChild(pill);
+      li.appendChild(meta);
       ul.appendChild(li);
     });
   });
 
-  // table
-  const tbody = document.getElementById("task-rows");
-  tbody.innerHTML = "";
+  const list = document.getElementById("task-rows");
+  list.innerHTML = "";
   tasks.forEach((t) => {
-    const tr = document.createElement("tr");
-    if (t.done) tr.className = "done";
+    const li = document.createElement("li");
+    if (t.done) li.className = "done";
 
-    const tdDone = document.createElement("td");
     const cb = document.createElement("input");
     cb.type = "checkbox";
     cb.checked = t.done;
@@ -378,20 +424,17 @@ function render() {
       saveTasks(tasks);
       render();
     });
-    tdDone.appendChild(cb);
 
-    const tdTask = document.createElement("td");
     const taskInput = document.createElement("input");
     taskInput.type = "text";
+    taskInput.className = "task-input";
     taskInput.value = t.task;
     taskInput.addEventListener("change", () => {
       t.task = taskInput.value;
       saveTasks(tasks);
       render();
     });
-    tdTask.appendChild(taskInput);
 
-    const tdPriority = document.createElement("td");
     const sel = document.createElement("select");
     ["High", "Medium", "Low"].forEach((p) => {
       const opt = document.createElement("option");
@@ -405,9 +448,7 @@ function render() {
       saveTasks(tasks);
       render();
     });
-    tdPriority.appendChild(sel);
 
-    const tdDue = document.createElement("td");
     const dueInput = document.createElement("input");
     dueInput.type = "date";
     dueInput.value = t.due || "";
@@ -416,16 +457,7 @@ function render() {
       saveTasks(tasks);
       render();
     });
-    tdDue.appendChild(dueInput);
 
-    const tdArea = document.createElement("td");
-    const area = computeArea(t);
-    const tag = document.createElement("span");
-    tag.className = "area-tag " + area;
-    tag.textContent = AREA_LABEL[area];
-    tdArea.appendChild(tag);
-
-    const tdDel = document.createElement("td");
     const delBtn = document.createElement("button");
     delBtn.className = "del-btn";
     delBtn.textContent = "✕";
@@ -435,15 +467,13 @@ function render() {
       saveTasks(tasks);
       render();
     });
-    tdDel.appendChild(delBtn);
 
-    tr.appendChild(tdDone);
-    tr.appendChild(tdTask);
-    tr.appendChild(tdPriority);
-    tr.appendChild(tdDue);
-    tr.appendChild(tdArea);
-    tr.appendChild(tdDel);
-    tbody.appendChild(tr);
+    li.appendChild(cb);
+    li.appendChild(taskInput);
+    li.appendChild(sel);
+    li.appendChild(dueInput);
+    li.appendChild(delBtn);
+    list.appendChild(li);
   });
 }
 

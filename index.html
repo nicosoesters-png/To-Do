@@ -1,0 +1,473 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>To-Do List</title>
+<style>
+  :root {
+    --dark-blue: #1f3864;
+    --red: #c00000;
+    --orange: #ed7d31;
+    --yellow: #ffc000;
+    --blue: #2e75b6;
+    --grey: #808080;
+    --border: #dcdfe4;
+    --bg: #f5f6f8;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+    background: var(--bg);
+    margin: 0;
+    padding: 24px;
+    color: #222;
+  }
+  h1 {
+    color: var(--dark-blue);
+    font-size: 2.4rem;
+    margin: 0 0 24px 0;
+    font-weight: 800;
+  }
+  .layout {
+    display: grid;
+    grid-template-columns: 1fr 560px;
+    gap: 24px;
+    align-items: start;
+  }
+  @media (max-width: 980px) {
+    .layout { grid-template-columns: 1fr; }
+  }
+  .boxes-top {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  .boxes-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-top: 16px;
+  }
+  .box {
+    background: #fff;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    border: 1px solid var(--border);
+  }
+  .box-header {
+    padding: 10px 14px;
+    font-weight: 700;
+    font-size: 1.05rem;
+    color: #fff;
+  }
+  .box.today .box-header { background: var(--red); }
+  .box.tomorrow .box-header { background: var(--orange); }
+  .box.week .box-header { background: var(--yellow); color: #222; }
+  .box.nextweek .box-header { background: var(--blue); }
+  .box.general .box-header { background: var(--grey); }
+  .box-list {
+    list-style: none;
+    margin: 0;
+    padding: 8px 0;
+    min-height: 36px;
+  }
+  .box-list li {
+    padding: 7px 14px;
+    font-size: 0.95rem;
+    border-bottom: 1px solid #f0f0f0;
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+  }
+  .box-list li:last-child { border-bottom: none; }
+  .box-list .empty { color: #aaa; font-style: italic; }
+  .pill {
+    font-size: 0.7rem;
+    padding: 1px 7px;
+    border-radius: 10px;
+    color: #fff;
+    white-space: nowrap;
+    align-self: center;
+  }
+  .pill.High { background: var(--red); }
+  .pill.Medium { background: var(--orange); }
+  .pill.Low { background: var(--blue); }
+
+  .panel {
+    background: #fff;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    padding: 18px;
+  }
+  .panel h2 {
+    margin: 0 0 12px 0;
+    font-size: 1.1rem;
+    color: var(--dark-blue);
+  }
+  form.add-task {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr auto;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+  form.add-task input, form.add-task select {
+    padding: 8px 10px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 0.9rem;
+  }
+  form.add-task button {
+    background: var(--dark-blue);
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    padding: 8px 16px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  form.add-task button:hover { background: #16294a; }
+
+  table.tasks {
+    width: 100%;
+    table-layout: fixed;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+  }
+  table.tasks th {
+    text-align: left;
+    border-bottom: 2px solid var(--border);
+    padding: 8px 6px;
+    color: #555;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+  table.tasks td {
+    padding: 7px 6px;
+    border-bottom: 1px solid #f0f0f0;
+    vertical-align: middle;
+  }
+  table.tasks tr.done td {
+    color: #aaa;
+    text-decoration: line-through;
+    background: #fafafa;
+  }
+  table.tasks input[type="text"], table.tasks input[type="date"], table.tasks select {
+    border: 1px solid transparent;
+    background: transparent;
+    padding: 4px 6px;
+    border-radius: 4px;
+    font-size: 0.88rem;
+    width: 100%;
+  }
+  table.tasks input[type="text"]:hover, table.tasks input[type="date"]:hover, table.tasks select:hover {
+    border-color: var(--border);
+  }
+  table.tasks input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+  }
+  .area-tag {
+    font-size: 0.7rem;
+    padding: 2px 8px;
+    border-radius: 10px;
+    color: #fff;
+    white-space: nowrap;
+  }
+  .area-tag.Today { background: var(--red); }
+  .area-tag.Tomorrow { background: var(--orange); }
+  .area-tag.ThisWeek { background: var(--yellow); color: #222; }
+  .area-tag.NextWeek { background: var(--blue); }
+  .area-tag.General { background: var(--grey); }
+  .area-tag.Done { background: #bbb; }
+  .del-btn {
+    background: none;
+    border: none;
+    color: #c00000;
+    cursor: pointer;
+    font-size: 1.1rem;
+    line-height: 1;
+  }
+  .del-btn:hover { color: #800; }
+</style>
+</head>
+<body>
+  <h1>To-Do List</h1>
+  <div class="layout">
+    <div>
+      <div class="boxes-top">
+        <div class="box today">
+          <div class="box-header">Today</div>
+          <ul class="box-list" id="box-Today"></ul>
+        </div>
+        <div class="box tomorrow">
+          <div class="box-header">Tomorrow</div>
+          <ul class="box-list" id="box-Tomorrow"></ul>
+        </div>
+      </div>
+      <div class="boxes-stack">
+        <div class="box week">
+          <div class="box-header">This Week</div>
+          <ul class="box-list" id="box-ThisWeek"></ul>
+        </div>
+        <div class="box nextweek">
+          <div class="box-header">Next Week</div>
+          <ul class="box-list" id="box-NextWeek"></ul>
+        </div>
+        <div class="box general">
+          <div class="box-header">General</div>
+          <ul class="box-list" id="box-General"></ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>Tasks</h2>
+      <form class="add-task" id="add-form">
+        <input type="text" id="new-task" placeholder="Task name" required />
+        <select id="new-priority">
+          <option>Medium</option>
+          <option>High</option>
+          <option>Low</option>
+        </select>
+        <input type="date" id="new-due" />
+        <button type="submit">Add</button>
+      </form>
+      <table class="tasks">
+        <thead>
+          <tr>
+            <th style="width:34px">Done</th>
+            <th style="width:auto">Task</th>
+            <th style="width:90px">Priority</th>
+            <th style="width:130px">Due</th>
+            <th style="width:85px">Area</th>
+            <th style="width:26px"></th>
+          </tr>
+        </thead>
+        <tbody id="task-rows"></tbody>
+      </table>
+    </div>
+  </div>
+
+<script>
+const STORAGE_KEY = "todo-app-tasks";
+
+function loadTasks() {
+  const raw = localStorage.getItem(STORAGE_KEY);
+  if (raw) return JSON.parse(raw);
+  const today = new Date();
+  const iso = (d) => d.toISOString().slice(0, 10);
+  const addDays = (n) => { const d = new Date(today); d.setDate(d.getDate() + n); return iso(d); };
+  return [
+    { id: cryptoId(), task: "Finish proposal", priority: "High", due: iso(today), done: false },
+    { id: cryptoId(), task: "Pay invoice", priority: "Medium", due: addDays(-2), done: false },
+    { id: cryptoId(), task: "Call client", priority: "Medium", due: addDays(1), done: false },
+    { id: cryptoId(), task: "Team meeting prep", priority: "Low", due: addDays(3), done: false },
+    { id: cryptoId(), task: "Submit report", priority: "High", due: addDays(10), done: false },
+    { id: cryptoId(), task: "Clean inbox", priority: "Low", due: "", done: false },
+  ];
+}
+
+function cryptoId() {
+  return Math.random().toString(36).slice(2) + Date.now().toString(36);
+}
+
+function saveTasks(tasks) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
+}
+
+let tasks = loadTasks();
+
+function startOfDay(d) {
+  const x = new Date(d);
+  x.setHours(0, 0, 0, 0);
+  return x;
+}
+
+function endOfWeek(d) {
+  // week ends Sunday (ISO Mon-Sun)
+  const x = startOfDay(d);
+  const day = x.getDay(); // 0=Sun..6=Sat
+  const diff = day === 0 ? 0 : 7 - day;
+  x.setDate(x.getDate() + diff);
+  return x;
+}
+
+function computeArea(t) {
+  if (t.done) return "Done";
+  if (!t.due) return "General";
+  const today = startOfDay(new Date());
+  const due = startOfDay(new Date(t.due + "T00:00:00"));
+  const tomorrow = new Date(today); tomorrow.setDate(today.getDate() + 1);
+  const weekEnd = endOfWeek(today);
+  if (due <= today) return "Today";
+  if (due.getTime() === tomorrow.getTime()) return "Tomorrow";
+  if (due <= weekEnd) return "ThisWeek";
+  return "NextWeek";
+}
+
+function fmtDate(due) {
+  if (!due) return "";
+  const d = new Date(due + "T00:00:00");
+  const dd = String(d.getDate()).padStart(2, "0");
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  return `${dd}.${mm}.`;
+}
+
+function fmtDateFull(due) {
+  if (!due) return "";
+  const d = new Date(due + "T00:00:00");
+  const dd = String(d.getDate()).padStart(2, "0");
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const yyyy = d.getFullYear();
+  return `${dd}.${mm}.${yyyy}`;
+}
+
+const AREA_LABEL = { Today: "Today", Tomorrow: "Tomorrow", ThisWeek: "This Week", NextWeek: "Next Week", General: "General", Done: "Done" };
+
+function render() {
+  // boxes
+  const boxIds = ["Today", "Tomorrow", "ThisWeek", "NextWeek", "General"];
+  const grouped = {};
+  boxIds.forEach((b) => (grouped[b] = []));
+  tasks.forEach((t) => {
+    const area = computeArea(t);
+    if (grouped[area]) grouped[area].push(t);
+  });
+
+  boxIds.forEach((b) => {
+    const ul = document.getElementById("box-" + b);
+    ul.innerHTML = "";
+    if (grouped[b].length === 0) {
+      const li = document.createElement("li");
+      li.className = "empty";
+      li.textContent = "— none —";
+      ul.appendChild(li);
+      return;
+    }
+    grouped[b].forEach((t) => {
+      const li = document.createElement("li");
+      const label = document.createElement("span");
+      label.textContent = t.task + (t.due ? ` (${fmtDate(t.due)})` : "");
+      const pill = document.createElement("span");
+      pill.className = "pill " + t.priority;
+      pill.textContent = t.priority;
+      li.appendChild(label);
+      li.appendChild(pill);
+      ul.appendChild(li);
+    });
+  });
+
+  // table
+  const tbody = document.getElementById("task-rows");
+  tbody.innerHTML = "";
+  tasks.forEach((t) => {
+    const tr = document.createElement("tr");
+    if (t.done) tr.className = "done";
+
+    const tdDone = document.createElement("td");
+    const cb = document.createElement("input");
+    cb.type = "checkbox";
+    cb.checked = t.done;
+    cb.addEventListener("change", () => {
+      t.done = cb.checked;
+      saveTasks(tasks);
+      render();
+    });
+    tdDone.appendChild(cb);
+
+    const tdTask = document.createElement("td");
+    const taskInput = document.createElement("input");
+    taskInput.type = "text";
+    taskInput.value = t.task;
+    taskInput.addEventListener("change", () => {
+      t.task = taskInput.value;
+      saveTasks(tasks);
+      render();
+    });
+    tdTask.appendChild(taskInput);
+
+    const tdPriority = document.createElement("td");
+    const sel = document.createElement("select");
+    ["High", "Medium", "Low"].forEach((p) => {
+      const opt = document.createElement("option");
+      opt.value = p;
+      opt.textContent = p;
+      if (t.priority === p) opt.selected = true;
+      sel.appendChild(opt);
+    });
+    sel.addEventListener("change", () => {
+      t.priority = sel.value;
+      saveTasks(tasks);
+      render();
+    });
+    tdPriority.appendChild(sel);
+
+    const tdDue = document.createElement("td");
+    const dueInput = document.createElement("input");
+    dueInput.type = "date";
+    dueInput.value = t.due || "";
+    dueInput.addEventListener("change", () => {
+      t.due = dueInput.value;
+      saveTasks(tasks);
+      render();
+    });
+    tdDue.appendChild(dueInput);
+
+    const tdArea = document.createElement("td");
+    const area = computeArea(t);
+    const tag = document.createElement("span");
+    tag.className = "area-tag " + area;
+    tag.textContent = AREA_LABEL[area];
+    tdArea.appendChild(tag);
+
+    const tdDel = document.createElement("td");
+    const delBtn = document.createElement("button");
+    delBtn.className = "del-btn";
+    delBtn.textContent = "✕";
+    delBtn.title = "Delete task";
+    delBtn.addEventListener("click", () => {
+      tasks = tasks.filter((x) => x.id !== t.id);
+      saveTasks(tasks);
+      render();
+    });
+    tdDel.appendChild(delBtn);
+
+    tr.appendChild(tdDone);
+    tr.appendChild(tdTask);
+    tr.appendChild(tdPriority);
+    tr.appendChild(tdDue);
+    tr.appendChild(tdArea);
+    tr.appendChild(tdDel);
+    tbody.appendChild(tr);
+  });
+}
+
+document.getElementById("add-form").addEventListener("submit", (e) => {
+  e.preventDefault();
+  const taskInput = document.getElementById("new-task");
+  const priorityInput = document.getElementById("new-priority");
+  const dueInput = document.getElementById("new-due");
+  if (!taskInput.value.trim()) return;
+  tasks.push({
+    id: cryptoId(),
+    task: taskInput.value.trim(),
+    priority: priorityInput.value,
+    due: dueInput.value,
+    done: false,
+  });
+  saveTasks(tasks);
+  taskInput.value = "";
+  dueInput.value = "";
+  priorityInput.value = "Medium";
+  render();
+});
+
+render();
+</script>
+</body>
+</html>

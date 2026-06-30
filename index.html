@@ -255,9 +255,69 @@
     justify-self: end;
   }
   .del-btn:hover { color: #8a2c2c; }
+
+  .notify-btn {
+    position: fixed;
+    top: 24px;
+    right: 28px;
+    background: var(--cream);
+    color: var(--ink);
+    border: none;
+    border-radius: 20px;
+    padding: 8px 16px;
+    font-family: "Jost", sans-serif;
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    cursor: pointer;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+  }
+  .notify-btn.on {
+    background: var(--gold);
+    color: #2a2210;
+  }
+  .notify-btn:hover { opacity: 0.9; }
+
+  .verse-widget {
+    position: fixed;
+    bottom: 22px;
+    right: 22px;
+    max-width: 260px;
+    background: rgba(236, 232, 224, 0.94);
+    color: var(--ink);
+    border-radius: 14px;
+    padding: 14px 16px;
+    box-shadow: 0 12px 30px rgba(0,0,0,0.4);
+    border-left: 3px solid var(--gold);
+  }
+  .verse-widget .verse-label {
+    font-size: 0.62rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 6px;
+  }
+  .verse-widget .verse-text {
+    font-family: "Cormorant Garamond", serif;
+    font-style: italic;
+    font-size: 0.92rem;
+    line-height: 1.35;
+    margin-bottom: 6px;
+  }
+  .verse-widget .verse-ref {
+    font-size: 0.7rem;
+    color: var(--muted);
+    text-align: right;
+  }
+  @media (max-width: 600px) {
+    .verse-widget { max-width: 200px; font-size: 0.85rem; }
+    .notify-btn { top: 16px; right: 16px; }
+  }
 </style>
 </head>
 <body>
+  <button class="notify-btn" id="notify-btn">🔔 Enable Notifications</button>
+
   <div class="top">
     <div class="eyebrow">Daily Discipline</div>
     <h1>To Do List</h1>
@@ -306,6 +366,12 @@
       </form>
       <ul class="task-rows" id="task-rows"></ul>
     </div>
+  </div>
+
+  <div class="verse-widget">
+    <div class="verse-label">Verse of the Day</div>
+    <div class="verse-text" id="verse-text"></div>
+    <div class="verse-ref" id="verse-ref"></div>
   </div>
 
 <script>
@@ -498,6 +564,119 @@ document.getElementById("add-form").addEventListener("submit", (e) => {
 });
 
 render();
+
+// ---------- Verse of the Day ----------
+const VERSES = [
+  { text: "I can do all things through Christ who strengthens me.", ref: "Philippians 4:13" },
+  { text: "Be strong and courageous. Do not be afraid; the Lord your God goes with you.", ref: "Deuteronomy 31:6" },
+  { text: "For I know the plans I have for you, plans to prosper you and not to harm you.", ref: "Jeremiah 29:11" },
+  { text: "Love is patient, love is kind. It does not envy, it does not boast.", ref: "1 Corinthians 13:4" },
+  { text: "Trust in the Lord with all your heart and lean not on your own understanding.", ref: "Proverbs 3:5" },
+  { text: "The Lord is my shepherd, I lack nothing.", ref: "Psalm 23:1" },
+  { text: "Cast all your anxiety on Him because He cares for you.", ref: "1 Peter 5:7" },
+  { text: "She is clothed with strength and dignity, and she laughs without fear of the future.", ref: "Proverbs 31:25" },
+  { text: "This is the day the Lord has made; let us rejoice and be glad in it.", ref: "Psalm 118:24" },
+  { text: "Let all that you do be done in love.", ref: "1 Corinthians 16:14" },
+  { text: "Do not be anxious about anything, but in everything by prayer let your requests be known to God.", ref: "Philippians 4:6" },
+  { text: "The Lord himself goes before you and will be with you; he will never leave you.", ref: "Deuteronomy 31:8" },
+  { text: "Delight yourself in the Lord, and he will give you the desires of your heart.", ref: "Psalm 37:4" },
+  { text: "Above all else, guard your heart, for everything you do flows from it.", ref: "Proverbs 4:23" },
+  { text: "Come to me, all who are weary, and I will give you rest.", ref: "Matthew 11:28" },
+  { text: "Be still, and know that I am God.", ref: "Psalm 46:10" },
+  { text: "And we know that in all things God works for the good of those who love him.", ref: "Romans 8:28" },
+  { text: "Give thanks in all circumstances; for this is God's will for you.", ref: "1 Thessalonians 5:18" },
+  { text: "Whoever dwells in the shelter of the Most High will rest in the shadow of the Almighty.", ref: "Psalm 91:1" },
+  { text: "But those who hope in the Lord will renew their strength. They will soar on wings like eagles.", ref: "Isaiah 40:31" },
+  { text: "Rejoice always, pray continually, give thanks in all circumstances.", ref: "1 Thessalonians 5:16-18" },
+  { text: "A new command I give you: Love one another. As I have loved you, so you must love one another.", ref: "John 13:34" },
+  { text: "The joy of the Lord is your strength.", ref: "Nehemiah 8:10" },
+  { text: "He heals the brokenhearted and binds up their wounds.", ref: "Psalm 147:3" },
+  { text: "Many are the plans in a person's heart, but it is the Lord's purpose that prevails.", ref: "Proverbs 19:21" },
+  { text: "Keep your eyes on Jesus, the author and perfecter of faith.", ref: "Hebrews 12:2" },
+  { text: "Don't let your heart be troubled. Trust in God, trust also in me.", ref: "John 14:1" },
+  { text: "Every good and perfect gift is from above, coming down from the Father of lights.", ref: "James 1:17" },
+  { text: "May the God of hope fill you with all joy and peace as you trust in him.", ref: "Romans 15:13" },
+  { text: "But seek first his kingdom and his righteousness, and all these things will be given to you as well.", ref: "Matthew 6:33" },
+  { text: "The Lord is close to the brokenhearted and saves those who are crushed in spirit.", ref: "Psalm 34:18" },
+];
+
+function dayOfYear(d) {
+  const start = new Date(d.getFullYear(), 0, 0);
+  const diff = d - start;
+  return Math.floor(diff / 86400000);
+}
+
+function renderVerse() {
+  const idx = dayOfYear(new Date()) % VERSES.length;
+  const v = VERSES[idx];
+  document.getElementById("verse-text").textContent = `"${v.text}"`;
+  document.getElementById("verse-ref").textContent = v.ref;
+}
+renderVerse();
+// re-check at the top of the next hour in case the tab stays open past midnight
+setInterval(renderVerse, 60 * 60 * 1000);
+
+// ---------- Notifications ----------
+const NOTIFY_KEY = "todo-app-notify-enabled";
+const NOTIFIED_DATE_KEY = "todo-app-last-notified";
+const notifyBtn = document.getElementById("notify-btn");
+
+function notifyEnabled() {
+  return localStorage.getItem(NOTIFY_KEY) === "true" && Notification.permission === "granted";
+}
+
+function updateNotifyBtn() {
+  if (!("Notification" in window)) {
+    notifyBtn.style.display = "none";
+    return;
+  }
+  if (notifyEnabled()) {
+    notifyBtn.textContent = "🔔 Notifications On";
+    notifyBtn.classList.add("on");
+  } else {
+    notifyBtn.textContent = "🔔 Enable Notifications";
+    notifyBtn.classList.remove("on");
+  }
+}
+
+function checkDueTodayAndNotify(force) {
+  if (!notifyEnabled()) return;
+  const todayStr = new Date().toDateString();
+  if (!force && localStorage.getItem(NOTIFIED_DATE_KEY) === todayStr) return;
+
+  const dueToday = tasks.filter((t) => !t.done && computeArea(t) === "Today");
+  if (dueToday.length === 0) return;
+
+  const names = dueToday.map((t) => t.task).join(", ");
+  new Notification("Today's tasks", {
+    body: dueToday.length === 1 ? names : `${dueToday.length} tasks due: ${names}`,
+    icon: undefined,
+  });
+  localStorage.setItem(NOTIFIED_DATE_KEY, todayStr);
+}
+
+notifyBtn.addEventListener("click", () => {
+  if (!("Notification" in window)) return;
+  if (Notification.permission === "granted") {
+    const enabled = localStorage.getItem(NOTIFY_KEY) === "true";
+    localStorage.setItem(NOTIFY_KEY, (!enabled).toString());
+    updateNotifyBtn();
+    if (!enabled) checkDueTodayAndNotify(true);
+    return;
+  }
+  Notification.requestPermission().then((perm) => {
+    if (perm === "granted") {
+      localStorage.setItem(NOTIFY_KEY, "true");
+      checkDueTodayAndNotify(true);
+    }
+    updateNotifyBtn();
+  });
+});
+
+updateNotifyBtn();
+checkDueTodayAndNotify(false);
+// while the tab stays open, re-check periodically in case the date rolls over
+setInterval(() => checkDueTodayAndNotify(false), 30 * 60 * 1000);
 </script>
 </body>
 </html>

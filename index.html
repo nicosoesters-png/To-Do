@@ -311,8 +311,41 @@
     padding: 14px 16px;
     box-shadow: 0 12px 30px rgba(0,0,0,0.4);
     border-left: 3px solid var(--gold);
+    z-index: 40;
+    transition: opacity 0.2s ease, transform 0.2s ease;
   }
-  .verse-widget .verse-label { font-size: 0.62rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--gold); margin-bottom: 6px; }
+  .verse-widget.hidden { display: none; }
+  .verse-widget .verse-close {
+    position: absolute;
+    top: 6px;
+    right: 8px;
+    background: none;
+    border: none;
+    color: var(--muted);
+    cursor: pointer;
+    font-size: 0.75rem;
+    line-height: 1;
+    padding: 4px;
+  }
+  .verse-widget .verse-close:hover { color: var(--ink); }
+  .verse-reopen {
+    position: fixed;
+    bottom: 22px;
+    right: 22px;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: rgba(241, 230, 204, 0.9);
+    color: var(--ink);
+    border: 1px solid rgba(184,134,63,0.4);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.35);
+    cursor: pointer;
+    font-size: 1.1rem;
+    z-index: 40;
+    display: none;
+  }
+  .verse-reopen.show { display: block; }
+  .verse-widget .verse-label { font-size: 0.62rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--gold); margin-bottom: 6px; padding-right: 14px; }
   .verse-widget .verse-text { font-family: "Cormorant Garamond", serif; font-style: italic; font-size: 0.92rem; line-height: 1.35; margin-bottom: 6px; }
   .verse-widget .verse-ref { font-size: 0.7rem; color: var(--muted); text-align: right; }
   @media (max-width: 600px) {
@@ -449,6 +482,30 @@
     cursor: pointer;
   }
   .editor-actions .danger-btn:hover { background: #8a2c2c; color: #fff; }
+  .editor-actions .lock-btn, .editor-actions .attach-btn {
+    background: none;
+    border: 1px solid var(--line);
+    color: var(--ink);
+    border-radius: 4px;
+    padding: 6px 14px;
+    font-size: 0.72rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    cursor: pointer;
+  }
+  .editor-actions .lock-btn:hover, .editor-actions .attach-btn:hover { border-color: var(--gold); color: var(--gold); }
+  .editor-attachments { margin-top: 12px; display: flex; flex-direction: column; gap: 6px; }
+  .attachment-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: rgba(184,134,63,0.1);
+    border-radius: 6px;
+    padding: 6px 10px;
+  }
+  .attachment-row a { color: var(--ink); font-size: 0.82rem; text-decoration: none; }
+  .attachment-row a:hover { color: var(--gold); }
+  .attachment-row button { background: none; border: none; color: var(--muted); cursor: pointer; }
   .back-btn {
     background: none;
     border: none;
@@ -615,9 +672,15 @@
             <button type="button" data-cmd="insertOrderedList">1. Liste</button>
           </div>
           <div class="editor-body" id="editor-body" contenteditable="true"></div>
+          <div class="editor-attachments" id="editor-attachments"></div>
+          <input type="file" id="attach-file-input" multiple style="display:none">
           <div class="editor-actions">
             <span class="saved-hint" id="saved-hint">Automatisch gespeichert</span>
-            <button class="danger-btn" id="delete-note-btn">Notiz löschen</button>
+            <div style="display:flex; gap:8px;">
+              <button class="lock-btn" id="lock-note-btn" type="button">🔓 Passwort setzen</button>
+              <button class="attach-btn" id="attach-file-btn" type="button">📎 Datei anhängen</button>
+              <button class="danger-btn" id="delete-note-btn">Notiz löschen</button>
+            </div>
           </div>
         </div>
       </div>
@@ -642,11 +705,13 @@
     </div>
   </section>
 
-  <div class="verse-widget">
+  <div class="verse-widget" id="verse-widget">
+    <button class="verse-close" id="verse-close" title="Schließen">✕</button>
     <div class="verse-label">Verse of the Day</div>
     <div class="verse-text" id="verse-text"></div>
     <div class="verse-ref" id="verse-ref"></div>
   </div>
+  <button class="verse-reopen" id="verse-reopen" title="Tagesvers anzeigen">✝</button>
 
 <script>
 /* ============================================================
@@ -965,10 +1030,27 @@ function renderNoteGrid() {
   notes.filter((n) => n.categoryId === currentCategoryId).forEach((n) => {
     const card = document.createElement("div");
     card.className = "note-card";
+    card.style.position = "relative";
     const snippet = stripHtml(n.content).slice(0, 90);
     const tags = (n.tags || []).map((t) => `<span class="tag-chip">${escapeHtml(t)}</span>`).join("");
-    card.innerHTML = `<h4>${escapeHtml(n.title || "(ohne Titel)")}</h4><div class="snippet">${escapeHtml(snippet)}</div><div class="tags">${tags}</div>`;
+    const lock = n.password ? `<span title="Passwortgeschützt" style="margin-left:6px;">🔒</span>` : "";
+    card.innerHTML = `<h4>${escapeHtml(n.title || "(ohne Titel)")}${lock}</h4><div class="snippet">${escapeHtml(snippet)}</div><div class="tags">${tags}</div>`;
     card.addEventListener("click", () => openNoteEditor(n.id));
+
+    const delBtn = document.createElement("button");
+    delBtn.textContent = "✕";
+    delBtn.title = "Notiz löschen";
+    delBtn.style.cssText = "position:absolute;top:10px;right:10px;background:none;border:none;color:var(--muted);cursor:pointer;font-size:0.95rem;";
+    delBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      if (!confirm(`"${n.title || "(ohne Titel)"}" wirklich löschen?`)) return;
+      notes = notes.filter((x) => x.id !== n.id);
+      tasks.forEach((t) => { if (t.noteId === n.id) t.noteId = null; });
+      saveNotes();
+      saveTasks();
+      renderNoteGrid();
+    });
+    card.appendChild(delBtn);
     grid.appendChild(card);
   });
   const addTile = document.createElement("div");
@@ -986,10 +1068,20 @@ function renderNoteGrid() {
 document.getElementById("back-to-categories").addEventListener("click", showNotesCategories);
 document.getElementById("back-to-notelist").addEventListener("click", () => openCategory(currentCategoryId));
 
+const unlockedNotes = new Set();
+
 function openNoteEditor(noteId) {
-  currentNoteId = noteId;
   const note = notes.find((n) => n.id === noteId);
   if (!note) return;
+  if (note.password && !unlockedNotes.has(note.id)) {
+    const pw = prompt("Diese Notiz ist passwortgeschützt. Passwort eingeben:");
+    if (pw !== note.password) {
+      if (pw !== null) alert("Falsches Passwort.");
+      return;
+    }
+    unlockedNotes.add(note.id);
+  }
+  currentNoteId = noteId;
   currentCategoryId = note.categoryId;
   document.getElementById("notes-categories-view").style.display = "none";
   document.getElementById("notes-list-view").style.display = "none";
@@ -1003,7 +1095,85 @@ function openNoteEditor(noteId) {
   document.getElementById("editor-title").value = note.title || "";
   document.getElementById("editor-tags").value = (note.tags || []).join(", ");
   document.getElementById("editor-body").innerHTML = note.content || "";
+  document.getElementById("lock-note-btn").textContent = note.password ? "🔒 Passwort ändern/entfernen" : "🔓 Passwort setzen";
+  renderAttachments();
 }
+
+function renderAttachments() {
+  const note = notes.find((n) => n.id === currentNoteId);
+  const wrap = document.getElementById("editor-attachments");
+  wrap.innerHTML = "";
+  (note.attachments || []).forEach((a, idx) => {
+    const row = document.createElement("div");
+    row.className = "attachment-row";
+    const link = document.createElement("a");
+    link.href = a.dataUrl;
+    link.download = a.name;
+    link.textContent = `📎 ${a.name}`;
+    const rm = document.createElement("button");
+    rm.textContent = "✕";
+    rm.title = "Anhang entfernen";
+    rm.addEventListener("click", () => {
+      note.attachments.splice(idx, 1);
+      saveNotes();
+      renderAttachments();
+    });
+    row.appendChild(link);
+    row.appendChild(rm);
+    wrap.appendChild(row);
+  });
+}
+
+document.getElementById("lock-note-btn").addEventListener("click", () => {
+  const note = notes.find((n) => n.id === currentNoteId);
+  if (!note) return;
+  if (note.password) {
+    const action = confirm("Passwort entfernen? (Abbrechen = stattdessen neues Passwort setzen)");
+    if (action) {
+      note.password = null;
+      saveNotes();
+      document.getElementById("lock-note-btn").textContent = "🔓 Passwort setzen";
+      return;
+    }
+  }
+  const pw = prompt("Neues Passwort für diese Notiz eingeben:");
+  if (pw && pw.trim()) {
+    note.password = pw.trim();
+    unlockedNotes.add(note.id);
+    saveNotes();
+    document.getElementById("lock-note-btn").textContent = "🔒 Passwort ändern/entfernen";
+  }
+});
+
+document.getElementById("attach-file-btn").addEventListener("click", () => {
+  document.getElementById("attach-file-input").click();
+});
+
+document.getElementById("attach-file-input").addEventListener("change", (e) => {
+  const note = notes.find((n) => n.id === currentNoteId);
+  if (!note) return;
+  const files = Array.from(e.target.files || []);
+  let remaining = files.length;
+  if (!remaining) return;
+  files.forEach((file) => {
+    if (file.size > 4 * 1024 * 1024) {
+      alert(`"${file.name}" ist größer als 4 MB und wird übersprungen (lokaler Speicher ist begrenzt).`);
+      remaining--;
+      if (remaining === 0) e.target.value = "";
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      note.attachments = note.attachments || [];
+      note.attachments.push({ name: file.name, dataUrl: reader.result });
+      saveNotes();
+      renderAttachments();
+      remaining--;
+      if (remaining === 0) e.target.value = "";
+    };
+    reader.readAsDataURL(file);
+  });
+});
 
 function persistCurrentNote() {
   if (!currentNoteId) return;
@@ -1245,6 +1415,31 @@ function renderVerse() {
 }
 renderVerse();
 setInterval(renderVerse, 60 * 60 * 1000);
+
+const VERSE_DISMISS_KEY = "todo-app-verse-dismissed-date";
+function todayKey() {
+  const d = new Date();
+  return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+}
+function showVerseWidget() {
+  document.getElementById("verse-widget").classList.remove("hidden");
+  document.getElementById("verse-reopen").classList.remove("show");
+}
+function hideVerseWidget() {
+  document.getElementById("verse-widget").classList.add("hidden");
+  document.getElementById("verse-reopen").classList.add("show");
+}
+document.getElementById("verse-close").addEventListener("click", () => {
+  localStorage.setItem(VERSE_DISMISS_KEY, todayKey());
+  hideVerseWidget();
+});
+document.getElementById("verse-reopen").addEventListener("click", () => {
+  localStorage.removeItem(VERSE_DISMISS_KEY);
+  showVerseWidget();
+});
+if (localStorage.getItem(VERSE_DISMISS_KEY) === todayKey()) {
+  hideVerseWidget();
+}
 
 /* ============================================================
    Notifications (today's tasks + deadlines within 3 days)
